@@ -993,12 +993,6 @@
     }
 
     async function signOut() {
-      // Flip UI back to auth immediately
-      const app = document.getElementById('app-screen');
-      const auth = document.getElementById('auth-screen');
-      if (app) app.style.display = 'none';
-      if (auth) auth.style.display = 'flex';
-
       try {
         if (timerInterval) await stopTimer();
         const { error } = await sb.auth.signOut();
@@ -1006,22 +1000,18 @@
       } catch (e) {
         console.error('Error during signOut():', e);
       } finally {
-        // Clear client-side state and force a full reload
-        try {
-          localStorage.clear();
-          sessionStorage.clear();
-        } catch (_) { }
         currentUser = null;
         tasks = [];
         projects = [];
         timeline = [];
         chat = [];
-        window.location.reload();
+        document.getElementById('app-screen').style.display = 'none';
+        document.getElementById('auth-screen').style.display = 'flex';
       }
     }
 
     // ── SESSION ──
-    sb.auth.onAuthStateChange(async (event, session) => {
+    async function applySession(session) {
       if (session?.user) {
         currentUser = session.user;
         document.getElementById('auth-screen').style.display = 'none';
@@ -1030,10 +1020,25 @@
         document.getElementById('user-avatar').textContent = initials;
         await loadAll();
       } else {
+        currentUser = null;
+        tasks = [];
+        projects = [];
+        timeline = [];
+        chat = [];
         document.getElementById('app-screen').style.display = 'none';
         document.getElementById('auth-screen').style.display = 'flex';
       }
+    }
+
+    sb.auth.onAuthStateChange(async (_event, session) => {
+      await applySession(session);
     });
+
+    // initial session check on first load
+    (async () => {
+      const { data } = await sb.auth.getSession();
+      await applySession(data.session);
+    })();
 
     // ── DATA LOADING ──
     async function loadAll() {
