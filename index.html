@@ -1,608 +1,1219 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WorkTrack — RAG Project Manager</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#fff;--bg2:#f7f7f5;--bg3:#f0eeea;
-  --text:#1a1a18;--text2:#5a5a56;--text3:#9a9a94;
-  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.18);
-  --r:8px;--rl:12px;
-  --info-bg:#E6F1FB;--info-text:#0C447C;--info-border:#B5D4F4;
-  --success-bg:#EAF3DE;--success-text:#27500A;--success-border:#C0DD97;
-  --warn-bg:#FAEEDA;--warn-text:#633806;--warn-border:#FAC775;
-  --danger-bg:#FCEBEB;--danger-text:#791F1F;--danger-border:#F7C1C1;
-}
-@media(prefers-color-scheme:dark){
-  :root{
-    --bg:#1e1e1c;--bg2:#2a2a28;--bg3:#333330;
-    --text:#e8e8e2;--text2:#a8a8a0;--text3:#68685e;
-    --border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.18);
-    --info-bg:#0c2540;--info-text:#85B7EB;--info-border:#185FA5;
-    --success-bg:#142208;--success-text:#97C459;--success-border:#3B6D11;
-    --warn-bg:#2a1e08;--warn-text:#FAC775;--warn-border:#854F0B;
-    --danger-bg:#2a0c0c;--danger-text:#F09595;--danger-border:#A32D2D;
-  }
-}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WorkTrack — RAG Project Manager</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
 
-/* AUTH SCREEN */
-.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem}
-.auth-box{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rl);padding:2rem;width:100%;max-width:400px}
-.auth-logo{font-size:20px;font-weight:700;margin-bottom:.3rem}
-.auth-sub{font-size:13px;color:var(--text2);margin-bottom:1.5rem}
-.auth-tabs{display:flex;gap:4px;margin-bottom:1.2rem;border-bottom:0.5px solid var(--border);padding-bottom:0}
-.auth-tab{padding:6px 14px;font-size:13px;font-weight:500;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;color:var(--text2);font-family:inherit}
-.auth-tab.active{color:var(--text);border-bottom-color:var(--text)}
-.field{margin-bottom:12px}
-.field label{display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:4px}
-.field input{width:100%;padding:9px 11px;font-size:13px;font-family:inherit;background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--r);color:var(--text);outline:none}
-.field input:focus{border-color:var(--text3)}
-.auth-err{font-size:12px;color:var(--danger-text);background:var(--danger-bg);border:0.5px solid var(--danger-border);border-radius:var(--r);padding:8px 10px;margin-bottom:10px;display:none}
-.auth-ok{font-size:12px;color:var(--success-text);background:var(--success-bg);border:0.5px solid var(--success-border);border-radius:var(--r);padding:8px 10px;margin-bottom:10px;display:none}
-.feature-list{margin-top:1.5rem;padding-top:1.2rem;border-top:0.5px solid var(--border)}
-.feature-list p{font-size:12px;color:var(--text3);margin-bottom:6px;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
-.feature-item{font-size:12px;color:var(--text2);padding:3px 0;display:flex;gap:6px;align-items:center}
-.check{width:14px;height:14px;background:var(--success-bg);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;color:var(--success-text)}
+    :root {
+      --bg: #fff;
+      --bg2: #f7f7f5;
+      --bg3: #f0eeea;
+      --text: #1a1a18;
+      --text2: #5a5a56;
+      --text3: #9a9a94;
+      --border: rgba(0, 0, 0, 0.1);
+      --border2: rgba(0, 0, 0, 0.18);
+      --r: 8px;
+      --rl: 12px;
+      --info-bg: #E6F1FB;
+      --info-text: #0C447C;
+      --info-border: #B5D4F4;
+      --success-bg: #EAF3DE;
+      --success-text: #27500A;
+      --success-border: #C0DD97;
+      --warn-bg: #FAEEDA;
+      --warn-text: #633806;
+      --warn-border: #FAC775;
+      --danger-bg: #FCEBEB;
+      --danger-text: #791F1F;
+      --danger-border: #F7C1C1;
+    }
 
-/* APP */
-.app-wrap{display:none}
-.topbar{background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;gap:1rem;height:52px;position:sticky;top:0;z-index:10}
-.logo{font-size:15px;font-weight:700;color:var(--text)}
-.tabs{display:flex;gap:2px;flex:1;overflow-x:auto}
-.tab{padding:6px 13px;font-size:13px;font-weight:500;background:none;border:none;border-radius:var(--r);cursor:pointer;color:var(--text2);white-space:nowrap;font-family:inherit;transition:background .12s}
-.tab:hover{background:var(--bg2);color:var(--text)}
-.tab.active{background:var(--bg2);color:var(--text)}
-.user-bar{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.avatar{width:30px;height:30px;border-radius:50%;background:var(--info-bg);color:var(--info-text);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center}
-.plan-badge{font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;background:var(--success-bg);color:var(--success-text)}
-.plan-badge.free{background:var(--bg2);color:var(--text3)}
-.main{max-width:920px;margin:0 auto;padding:1.5rem}
-.panel{display:none}.panel.active{display:block}
+    @media(prefers-color-scheme:dark) {
+      :root {
+        --bg: #1e1e1c;
+        --bg2: #2a2a28;
+        --bg3: #333330;
+        --text: #e8e8e2;
+        --text2: #a8a8a0;
+        --text3: #68685e;
+        --border: rgba(255, 255, 255, 0.1);
+        --border2: rgba(255, 255, 255, 0.18);
+        --info-bg: #0c2540;
+        --info-text: #85B7EB;
+        --info-border: #185FA5;
+        --success-bg: #142208;
+        --success-text: #97C459;
+        --success-border: #3B6D11;
+        --warn-bg: #2a1e08;
+        --warn-text: #FAC775;
+        --warn-border: #854F0B;
+        --danger-bg: #2a0c0c;
+        --danger-text: #F09595;
+        --danger-border: #A32D2D;
+      }
+    }
 
-/* reusable */
-input,select,textarea{font-family:inherit;font-size:13px;color:var(--text);background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--r);padding:8px 10px;outline:none;transition:border-color .15s}
-input:focus,textarea:focus,select:focus{border-color:var(--text3)}
-textarea{resize:vertical}select{cursor:pointer}
-.btn{padding:7px 14px;font-size:13px;font-weight:500;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);color:var(--text);cursor:pointer;font-family:inherit;transition:background .12s}
-.btn:hover{background:var(--bg3)}.btn:active{transform:scale(.98)}
-.btn.primary{background:var(--text);color:var(--bg);border-color:transparent}.btn.primary:hover{opacity:.85}
-.btn.sm{padding:4px 10px;font-size:12px}.btn.danger{color:var(--danger-text)}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-.divider{border:none;border-top:0.5px solid var(--border);margin:14px 0}
-.sec-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
-.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--rl);padding:12px 14px;margin-bottom:8px;transition:border-color .12s}
-.card:hover{border-color:var(--border2)}
-.metrics-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:1.2rem}
-@media(max-width:520px){.metrics-grid{grid-template-columns:repeat(2,1fr)}}
-.metric{background:var(--bg2);border-radius:var(--r);padding:12px 14px;text-align:center}
-.metric-val{font-size:24px;font-weight:600}
-.metric-label{font-size:11px;color:var(--text3);margin-top:2px}
-.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
-.b-todo{background:var(--bg2);color:var(--text2)}
-.b-inprogress{background:var(--warn-bg);color:var(--warn-text)}
-.b-done{background:var(--success-bg);color:var(--success-text)}
-.b-blocked{background:var(--danger-bg);color:var(--danger-text)}
-.b-alert{background:var(--danger-bg);color:var(--danger-text)}
-.b-checkin{background:var(--info-bg);color:var(--info-text)}
-.b-log{background:var(--bg2);color:var(--text2)}
-.pri-high{color:var(--danger-text);font-size:11px;font-weight:500}
-.pri-medium{color:var(--warn-text);font-size:11px;font-weight:500}
-.pri-low{color:var(--success-text);font-size:11px;font-weight:500}
-.alert-card{background:var(--danger-bg);border:0.5px solid var(--danger-border);border-radius:var(--r);padding:10px 12px;margin-bottom:6px;font-size:13px;color:var(--danger-text)}
-.checkin-card{background:var(--info-bg);border:0.5px solid var(--info-border);border-radius:var(--r);padding:12px 14px;margin-bottom:10px}
-.tl-item{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start}
-.tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
-.tl-dot-status{background:#1D9E75}.tl-dot-log{background:#888780}
-.tl-dot-alert{background:#E24B4A}.tl-dot-checkin{background:#378ADD}.tl-dot-timer{background:#7F77DD}
-.tl-line{display:flex;flex-direction:column;align-items:center}
-.tl-connector{width:1px;background:var(--border);flex:1;min-height:18px}
-.tl-body{flex:1}
-.tl-time{font-size:11px;color:var(--text3);margin-bottom:2px}
-.tl-text{font-size:13px;line-height:1.4}
-.tl-meta{font-size:12px;color:var(--text2);margin-top:2px}
-.timer-display{font-size:32px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:.02em}
-.prog-bar{height:4px;background:var(--bg3);border-radius:2px;margin-top:6px}
-.prog-fill{height:4px;background:var(--success-text);border-radius:2px;transition:width .3s}
-.msg{padding:10px 12px;border-radius:var(--r);font-size:13px;line-height:1.6;margin-bottom:8px}
-.msg.user{background:var(--bg2);margin-left:40px}
-.msg.ai{background:var(--info-bg);margin-right:40px}
-.ai-lbl{font-size:11px;font-weight:600;color:var(--info-text);margin-bottom:3px}
-.chat-box{margin-bottom:12px;max-height:380px;overflow-y:auto}
-.limit-bar{background:var(--warn-bg);border:0.5px solid var(--warn-border);border-radius:var(--r);padding:9px 12px;font-size:12px;color:var(--warn-text);margin-bottom:10px}
-.empty{color:var(--text3);font-size:13px;text-align:center;padding:2rem 1rem}
-.loading{color:var(--text3);font-size:13px;text-align:center;padding:1rem}
-#toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:var(--bg);font-size:12px;padding:7px 14px;border-radius:var(--r);opacity:0;transition:opacity .2s;pointer-events:none;z-index:999}
-</style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg3);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5
+    }
+
+    /* AUTH SCREEN */
+    .auth-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem
+    }
+
+    .auth-box {
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--rl);
+      padding: 2rem;
+      width: 100%;
+      max-width: 400px
+    }
+
+    .auth-logo {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: .3rem
+    }
+
+    .auth-sub {
+      font-size: 13px;
+      color: var(--text2);
+      margin-bottom: 1.5rem
+    }
+
+    .auth-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 1.2rem;
+      border-bottom: 0.5px solid var(--border);
+      padding-bottom: 0
+    }
+
+    .auth-tab {
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      color: var(--text2);
+      font-family: inherit
+    }
+
+    .auth-tab.active {
+      color: var(--text);
+      border-bottom-color: var(--text)
+    }
+
+    .field {
+      margin-bottom: 12px
+    }
+
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text2);
+      margin-bottom: 4px
+    }
+
+    .field input {
+      width: 100%;
+      padding: 9px 11px;
+      font-size: 13px;
+      font-family: inherit;
+      background: var(--bg2);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--r);
+      color: var(--text);
+      outline: none
+    }
+
+    .field input:focus {
+      border-color: var(--text3)
+    }
+
+    .auth-err {
+      font-size: 12px;
+      color: var(--danger-text);
+      background: var(--danger-bg);
+      border: 0.5px solid var(--danger-border);
+      border-radius: var(--r);
+      padding: 8px 10px;
+      margin-bottom: 10px;
+      display: none
+    }
+
+    .auth-ok {
+      font-size: 12px;
+      color: var(--success-text);
+      background: var(--success-bg);
+      border: 0.5px solid var(--success-border);
+      border-radius: var(--r);
+      padding: 8px 10px;
+      margin-bottom: 10px;
+      display: none
+    }
+
+    .feature-list {
+      margin-top: 1.5rem;
+      padding-top: 1.2rem;
+      border-top: 0.5px solid var(--border)
+    }
+
+    .feature-list p {
+      font-size: 12px;
+      color: var(--text3);
+      margin-bottom: 6px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .04em
+    }
+
+    .feature-item {
+      font-size: 12px;
+      color: var(--text2);
+      padding: 3px 0;
+      display: flex;
+      gap: 6px;
+      align-items: center
+    }
+
+    .check {
+      width: 14px;
+      height: 14px;
+      background: var(--success-bg);
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 9px;
+      color: var(--success-text)
+    }
+
+    /* APP */
+    .app-wrap {
+      display: none
+    }
+
+    .topbar {
+      background: var(--bg);
+      border-bottom: 0.5px solid var(--border);
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      height: 52px;
+      position: sticky;
+      top: 0;
+      z-index: 10
+    }
+
+    .logo {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text)
+    }
+
+    .tabs {
+      display: flex;
+      gap: 2px;
+      flex: 1;
+      overflow-x: auto
+    }
+
+    .tab {
+      padding: 6px 13px;
+      font-size: 13px;
+      font-weight: 500;
+      background: none;
+      border: none;
+      border-radius: var(--r);
+      cursor: pointer;
+      color: var(--text2);
+      white-space: nowrap;
+      font-family: inherit;
+      transition: background .12s
+    }
+
+    .tab:hover {
+      background: var(--bg2);
+      color: var(--text)
+    }
+
+    .tab.active {
+      background: var(--bg2);
+      color: var(--text)
+    }
+
+    .user-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0
+    }
+
+    .avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--info-bg);
+      color: var(--info-text);
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .plan-badge {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: var(--success-bg);
+      color: var(--success-text)
+    }
+
+    .plan-badge.free {
+      background: var(--bg2);
+      color: var(--text3)
+    }
+
+    .main {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 1.5rem
+    }
+
+    .panel {
+      display: none
+    }
+
+    .panel.active {
+      display: block
+    }
+
+    /* reusable */
+    input,
+    select,
+    textarea {
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--text);
+      background: var(--bg);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--r);
+      padding: 8px 10px;
+      outline: none;
+      transition: border-color .15s
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--text3)
+    }
+
+    textarea {
+      resize: vertical
+    }
+
+    select {
+      cursor: pointer
+    }
+
+    .btn {
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--r);
+      background: var(--bg2);
+      color: var(--text);
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .12s
+    }
+
+    .btn:hover {
+      background: var(--bg3)
+    }
+
+    .btn:active {
+      transform: scale(.98)
+    }
+
+    .btn.primary {
+      background: var(--text);
+      color: var(--bg);
+      border-color: transparent
+    }
+
+    .btn.primary:hover {
+      opacity: .85
+    }
+
+    .btn.sm {
+      padding: 4px 10px;
+      font-size: 12px
+    }
+
+    .btn.danger {
+      color: var(--danger-text)
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 10px
+    }
+
+    .divider {
+      border: none;
+      border-top: 0.5px solid var(--border);
+      margin: 14px 0
+    }
+
+    .sec-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 8px
+    }
+
+    .card {
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--rl);
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      transition: border-color .12s
+    }
+
+    .card:hover {
+      border-color: var(--border2)
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 1.2rem
+    }
+
+    @media(max-width:520px) {
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr)
+      }
+    }
+
+    .metric {
+      background: var(--bg2);
+      border-radius: var(--r);
+      padding: 12px 14px;
+      text-align: center
+    }
+
+    .metric-val {
+      font-size: 24px;
+      font-weight: 600
+    }
+
+    .metric-label {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 2px
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500
+    }
+
+    .b-todo {
+      background: var(--bg2);
+      color: var(--text2)
+    }
+
+    .b-inprogress {
+      background: var(--warn-bg);
+      color: var(--warn-text)
+    }
+
+    .b-done {
+      background: var(--success-bg);
+      color: var(--success-text)
+    }
+
+    .b-blocked {
+      background: var(--danger-bg);
+      color: var(--danger-text)
+    }
+
+    .b-alert {
+      background: var(--danger-bg);
+      color: var(--danger-text)
+    }
+
+    .b-checkin {
+      background: var(--info-bg);
+      color: var(--info-text)
+    }
+
+    .b-log {
+      background: var(--bg2);
+      color: var(--text2)
+    }
+
+    .pri-high {
+      color: var(--danger-text);
+      font-size: 11px;
+      font-weight: 500
+    }
+
+    .pri-medium {
+      color: var(--warn-text);
+      font-size: 11px;
+      font-weight: 500
+    }
+
+    .pri-low {
+      color: var(--success-text);
+      font-size: 11px;
+      font-weight: 500
+    }
+
+    .alert-card {
+      background: var(--danger-bg);
+      border: 0.5px solid var(--danger-border);
+      border-radius: var(--r);
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: var(--danger-text)
+    }
+
+    .checkin-card {
+      background: var(--info-bg);
+      border: 0.5px solid var(--info-border);
+      border-radius: var(--r);
+      padding: 12px 14px;
+      margin-bottom: 10px
+    }
+
+    .tl-item {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 14px;
+      align-items: flex-start
+    }
+
+    .tl-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 4px
+    }
+
+    .tl-dot-status {
+      background: #1D9E75
+    }
+
+    .tl-dot-log {
+      background: #888780
+    }
+
+    .tl-dot-alert {
+      background: #E24B4A
+    }
+
+    .tl-dot-checkin {
+      background: #378ADD
+    }
+
+    .tl-dot-timer {
+      background: #7F77DD
+    }
+
+    .tl-line {
+      display: flex;
+      flex-direction: column;
+      align-items: center
+    }
+
+    .tl-connector {
+      width: 1px;
+      background: var(--border);
+      flex: 1;
+      min-height: 18px
+    }
+
+    .tl-body {
+      flex: 1
+    }
+
+    .tl-time {
+      font-size: 11px;
+      color: var(--text3);
+      margin-bottom: 2px
+    }
+
+    .tl-text {
+      font-size: 13px;
+      line-height: 1.4
+    }
+
+    .tl-meta {
+      font-size: 12px;
+      color: var(--text2);
+      margin-top: 2px
+    }
+
+    .timer-display {
+      font-size: 32px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: .02em
+    }
+
+    .prog-bar {
+      height: 4px;
+      background: var(--bg3);
+      border-radius: 2px;
+      margin-top: 6px
+    }
+
+    .prog-fill {
+      height: 4px;
+      background: var(--success-text);
+      border-radius: 2px;
+      transition: width .3s
+    }
+
+    .msg {
+      padding: 10px 12px;
+      border-radius: var(--r);
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 8px
+    }
+
+    .msg.user {
+      background: var(--bg2);
+      margin-left: 40px
+    }
+
+    .msg.ai {
+      background: var(--info-bg);
+      margin-right: 40px
+    }
+
+    .ai-lbl {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--info-text);
+      margin-bottom: 3px
+    }
+
+    .chat-box {
+      margin-bottom: 12px;
+      max-height: 380px;
+      overflow-y: auto
+    }
+
+    .limit-bar {
+      background: var(--warn-bg);
+      border: 0.5px solid var(--warn-border);
+      border-radius: var(--r);
+      padding: 9px 12px;
+      font-size: 12px;
+      color: var(--warn-text);
+      margin-bottom: 10px
+    }
+
+    .empty {
+      color: var(--text3);
+      font-size: 13px;
+      text-align: center;
+      padding: 2rem 1rem
+    }
+
+    .loading {
+      color: var(--text3);
+      font-size: 13px;
+      text-align: center;
+      padding: 1rem
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--text);
+      color: var(--bg);
+      font-size: 12px;
+      padding: 7px 14px;
+      border-radius: var(--r);
+      opacity: 0;
+      transition: opacity .2s;
+      pointer-events: none;
+      z-index: 999
+    }
+  </style>
 </head>
+
 <body>
 
-<!-- AUTH SCREEN -->
-<div class="auth-wrap" id="auth-screen">
-  <div class="auth-box">
-    <div class="auth-logo">WorkTrack</div>
-    <div class="auth-sub">RAG-powered project & task manager</div>
-    <div class="auth-tabs">
-      <button class="auth-tab active" onclick="authTab('login')">Sign in</button>
-      <button class="auth-tab" onclick="authTab('signup')">Create account</button>
-    </div>
-    <div id="auth-err" class="auth-err"></div>
-    <div id="auth-ok" class="auth-ok"></div>
-    <div id="login-form">
-      <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
-      <div class="field"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')signIn()"></div>
-      <button class="btn primary" style="width:100%" onclick="signIn()" id="login-btn">Sign in</button>
-    </div>
-    <div id="signup-form" style="display:none">
-      <div class="field"><label>Email</label><input type="email" id="signup-email" placeholder="you@example.com"></div>
-      <div class="field"><label>Password</label><input type="password" id="signup-pass" placeholder="Min 6 characters" onkeydown="if(event.key==='Enter')signUp()"></div>
-      <button class="btn primary" style="width:100%" onclick="signUp()" id="signup-btn">Create free account</button>
-    </div>
-    <div class="feature-list">
-      <p>Free plan includes</p>
-      <div class="feature-item"><span class="check">✓</span> 5 projects, 20 tasks</div>
-      <div class="feature-item"><span class="check">✓</span> Time tracking + timeline</div>
-      <div class="feature-item"><span class="check">✓</span> 10 AI queries per day</div>
-      <div class="feature-item"><span class="check">✓</span> Daily check-ins + alerts</div>
-    </div>
-  </div>
-</div>
-
-<!-- APP -->
-<div class="app-wrap" id="app-screen">
-  <div class="topbar">
-    <div class="logo">WorkTrack</div>
-    <div class="tabs">
-      <button class="tab active" onclick="sw('dashboard')">Dashboard</button>
-      <button class="tab" onclick="sw('tracker')">Tracker</button>
-      <button class="tab" onclick="sw('tasks')">Tasks</button>
-      <button class="tab" onclick="sw('projects')">Projects</button>
-      <button class="tab" onclick="sw('timeline')">Timeline</button>
-      <button class="tab" onclick="sw('ask')">Ask AI</button>
-    </div>
-    <div class="user-bar">
-      <span class="plan-badge free" id="plan-label">Free</span>
-      <div class="avatar" id="user-avatar">?</div>
-      <button class="btn sm" onclick="signOut()">Sign out</button>
+  <!-- AUTH SCREEN -->
+  <div class="auth-wrap" id="auth-screen">
+    <div class="auth-box">
+      <div class="auth-logo">WorkTrack</div>
+      <div class="auth-sub">RAG-powered project & task manager</div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="authTab('login')">Sign in</button>
+        <button class="auth-tab" onclick="authTab('signup')">Create account</button>
+      </div>
+      <div id="auth-err" class="auth-err"></div>
+      <div id="auth-ok" class="auth-ok"></div>
+      <div id="login-form">
+        <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
+        <div class="field"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••"
+            onkeydown="if(event.key==='Enter')signIn()"></div>
+        <button class="btn primary" style="width:100%" onclick="signIn()" id="login-btn">Sign in</button>
+      </div>
+      <div id="signup-form" style="display:none">
+        <div class="field"><label>Email</label><input type="email" id="signup-email" placeholder="you@example.com">
+        </div>
+        <div class="field"><label>Password</label><input type="password" id="signup-pass" placeholder="Min 6 characters"
+            onkeydown="if(event.key==='Enter')signUp()"></div>
+        <button class="btn primary" style="width:100%" onclick="signUp()" id="signup-btn">Create free account</button>
+      </div>
+      <div class="feature-list">
+        <p>Free plan includes</p>
+        <div class="feature-item"><span class="check">✓</span> 5 projects, 20 tasks</div>
+        <div class="feature-item"><span class="check">✓</span> Time tracking + timeline</div>
+        <div class="feature-item"><span class="check">✓</span> 10 AI queries per day</div>
+        <div class="feature-item"><span class="check">✓</span> Daily check-ins + alerts</div>
+      </div>
     </div>
   </div>
-  <div class="main">
 
-    <!-- DASHBOARD -->
-    <div class="panel active" id="panel-dashboard">
-      <div class="metrics-grid" id="db-metrics"><div class="metric"><div class="metric-val">—</div><div class="metric-label">Loading...</div></div></div>
-      <div id="db-alerts"></div>
-      <div id="db-checkin"></div>
-      <div class="sec-label">Active timer</div>
-      <div id="db-timer" style="margin-bottom:1rem"></div>
-      <div class="sec-label">Recent activity</div>
-      <div id="db-recent"></div>
+  <!-- APP -->
+  <div class="app-wrap" id="app-screen">
+    <div class="topbar">
+      <div class="logo">WorkTrack</div>
+      <div class="tabs">
+        <button class="tab active" onclick="sw('dashboard')">Dashboard</button>
+        <button class="tab" onclick="sw('tracker')">Tracker</button>
+        <button class="tab" onclick="sw('tasks')">Tasks</button>
+        <button class="tab" onclick="sw('projects')">Projects</button>
+        <button class="tab" onclick="sw('timeline')">Timeline</button>
+        <button class="tab" onclick="sw('ask')">Ask AI</button>
+      </div>
+      <div class="user-bar">
+        <span class="plan-badge free" id="plan-label">Free</span>
+        <div class="avatar" id="user-avatar">?</div>
+        <button class="btn sm" onclick="signOut()">Sign out</button>
+      </div>
     </div>
+    <div class="main">
 
-    <!-- TRACKER -->
-    <div class="panel" id="panel-tracker">
-      <div class="sec-label">Timer</div>
-      <div class="card" style="margin-bottom:1rem">
-        <div class="timer-display" id="timer-display">00:00:00</div>
-        <div style="font-size:13px;color:var(--text2);margin-top:4px" id="timer-task-label">No task selected</div>
-        <div class="row" style="margin-top:12px">
-          <select id="timer-task-sel" style="flex:1;min-width:160px"><option value="">Select a task...</option></select>
-          <button class="btn primary" id="timer-btn" onclick="toggleTimer()">Start</button>
-          <button class="btn" onclick="lapTimer()">Lap</button>
+      <!-- DASHBOARD -->
+      <div class="panel active" id="panel-dashboard">
+        <div class="metrics-grid" id="db-metrics">
+          <div class="metric">
+            <div class="metric-val">—</div>
+            <div class="metric-label">Loading...</div>
+          </div>
+        </div>
+        <div id="db-alerts"></div>
+        <div id="db-checkin"></div>
+        <div class="sec-label">Active timer</div>
+        <div id="db-timer" style="margin-bottom:1rem"></div>
+        <div class="sec-label">Recent activity</div>
+        <div id="db-recent"></div>
+      </div>
+
+      <!-- TRACKER -->
+      <div class="panel" id="panel-tracker">
+        <div class="sec-label">Timer</div>
+        <div class="card" style="margin-bottom:1rem">
+          <div class="timer-display" id="timer-display">00:00:00</div>
+          <div style="font-size:13px;color:var(--text2);margin-top:4px" id="timer-task-label">No task selected</div>
+          <div class="row" style="margin-top:12px">
+            <select id="timer-task-sel" style="flex:1;min-width:160px">
+              <option value="">Select a task...</option>
+            </select>
+            <button class="btn primary" id="timer-btn" onclick="toggleTimer()">Start</button>
+            <button class="btn" onclick="lapTimer()">Lap</button>
+          </div>
+        </div>
+        <hr class="divider">
+        <div class="sec-label">Manual work log</div>
+        <div class="row">
+          <select id="log-task" style="flex:1;min-width:160px">
+            <option value="">Select task (optional)...</option>
+          </select>
+          <input type="text" id="log-note" placeholder="What did you work on?" style="flex:2;min-width:180px">
+          <input type="number" id="log-mins" placeholder="mins" style="width:72px" min="1">
+          <button class="btn primary" onclick="addManualLog()">Log</button>
+        </div>
+        <hr class="divider">
+        <div class="sec-label">Daily check-in</div>
+        <div class="checkin-card">
+          <div style="font-size:13px;font-weight:600;color:var(--info-text);margin-bottom:8px">What are you working on
+            today?</div>
+          <textarea id="checkin-text" placeholder="Describe your focus, blockers, or progress..."
+            style="width:100%;min-height:64px"></textarea>
+          <div class="row" style="margin-top:8px">
+            <button class="btn primary" onclick="submitCheckin()">Submit check-in</button>
+            <select id="checkin-mood">
+              <option value="focused">Focused</option>
+              <option value="productive">Productive</option>
+              <option value="blocked">Blocked</option>
+              <option value="slow">Slow day</option>
+            </select>
+          </div>
         </div>
       </div>
-      <hr class="divider">
-      <div class="sec-label">Manual work log</div>
-      <div class="row">
-        <select id="log-task" style="flex:1;min-width:160px"><option value="">Select task (optional)...</option></select>
-        <input type="text" id="log-note" placeholder="What did you work on?" style="flex:2;min-width:180px">
-        <input type="number" id="log-mins" placeholder="mins" style="width:72px" min="1">
-        <button class="btn primary" onclick="addManualLog()">Log</button>
-      </div>
-      <hr class="divider">
-      <div class="sec-label">Daily check-in</div>
-      <div class="checkin-card">
-        <div style="font-size:13px;font-weight:600;color:var(--info-text);margin-bottom:8px">What are you working on today?</div>
-        <textarea id="checkin-text" placeholder="Describe your focus, blockers, or progress..." style="width:100%;min-height:64px"></textarea>
-        <div class="row" style="margin-top:8px">
-          <button class="btn primary" onclick="submitCheckin()">Submit check-in</button>
-          <select id="checkin-mood">
-            <option value="focused">Focused</option>
-            <option value="productive">Productive</option>
+
+      <!-- TASKS -->
+      <div class="panel" id="panel-tasks">
+        <div id="task-limit-warn"></div>
+        <div class="row">
+          <input type="text" id="t-title" placeholder="Task title" style="flex:2;min-width:140px">
+          <input type="text" id="t-proj" placeholder="Project" style="flex:1;min-width:100px" list="proj-dl">
+          <datalist id="proj-dl"></datalist>
+          <select id="t-status" style="min-width:110px">
+            <option value="todo">To do</option>
+            <option value="inprogress">In progress</option>
+            <option value="done">Done</option>
             <option value="blocked">Blocked</option>
-            <option value="slow">Slow day</option>
+          </select>
+          <select id="t-priority" style="min-width:100px">
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="low">Low</option>
+          </select>
+          <input type="date" id="t-due" style="min-width:130px">
+        </div>
+        <div class="row">
+          <textarea id="t-desc" placeholder="Description (optional)" style="flex:1;min-height:50px"></textarea>
+        </div>
+        <div class="row">
+          <button class="btn primary" id="t-submit" onclick="addTask()">Add task</button>
+          <button class="btn" onclick="clearTaskForm()">Clear</button>
+        </div>
+        <hr class="divider">
+        <div class="row">
+          <input type="text" id="t-search" placeholder="Search tasks..." style="min-width:150px"
+            oninput="renderTasks()">
+          <select id="t-fstatus" onchange="renderTasks()" style="min-width:110px">
+            <option value="">All statuses</option>
+            <option value="todo">To do</option>
+            <option value="inprogress">In progress</option>
+            <option value="done">Done</option>
+            <option value="blocked">Blocked</option>
+          </select>
+          <select id="t-fpriority" onchange="renderTasks()" style="min-width:100px">
+            <option value="">All priorities</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
           </select>
         </div>
+        <div id="task-list">
+          <div class="loading">Loading tasks...</div>
+        </div>
       </div>
-    </div>
 
-    <!-- TASKS -->
-    <div class="panel" id="panel-tasks">
-      <div id="task-limit-warn"></div>
-      <div class="row">
-        <input type="text" id="t-title" placeholder="Task title" style="flex:2;min-width:140px">
-        <input type="text" id="t-proj" placeholder="Project" style="flex:1;min-width:100px" list="proj-dl">
-        <datalist id="proj-dl"></datalist>
-        <select id="t-status" style="min-width:110px">
-          <option value="todo">To do</option>
-          <option value="inprogress">In progress</option>
-          <option value="done">Done</option>
-          <option value="blocked">Blocked</option>
-        </select>
-        <select id="t-priority" style="min-width:100px">
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-          <option value="low">Low</option>
-        </select>
-        <input type="date" id="t-due" style="min-width:130px">
+      <!-- PROJECTS -->
+      <div class="panel" id="panel-projects">
+        <div id="proj-limit-warn"></div>
+        <div class="row">
+          <input type="text" id="p-name" placeholder="Project name" style="flex:1;min-width:160px">
+          <textarea id="p-desc" placeholder="Description (optional)"
+            style="flex:2;min-height:38px;min-width:200px"></textarea>
+          <button class="btn primary" onclick="addProject()">Add project</button>
+        </div>
+        <hr class="divider">
+        <div id="proj-list">
+          <div class="loading">Loading projects...</div>
+        </div>
       </div>
-      <div class="row">
-        <textarea id="t-desc" placeholder="Description (optional)" style="flex:1;min-height:50px"></textarea>
-      </div>
-      <div class="row">
-        <button class="btn primary" id="t-submit" onclick="addTask()">Add task</button>
-        <button class="btn" onclick="clearTaskForm()">Clear</button>
-      </div>
-      <hr class="divider">
-      <div class="row">
-        <input type="text" id="t-search" placeholder="Search tasks..." style="min-width:150px" oninput="renderTasks()">
-        <select id="t-fstatus" onchange="renderTasks()" style="min-width:110px">
-          <option value="">All statuses</option>
-          <option value="todo">To do</option>
-          <option value="inprogress">In progress</option>
-          <option value="done">Done</option>
-          <option value="blocked">Blocked</option>
-        </select>
-        <select id="t-fpriority" onchange="renderTasks()" style="min-width:100px">
-          <option value="">All priorities</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
-        </select>
-      </div>
-      <div id="task-list"><div class="loading">Loading tasks...</div></div>
-    </div>
 
-    <!-- PROJECTS -->
-    <div class="panel" id="panel-projects">
-      <div id="proj-limit-warn"></div>
-      <div class="row">
-        <input type="text" id="p-name" placeholder="Project name" style="flex:1;min-width:160px">
-        <textarea id="p-desc" placeholder="Description (optional)" style="flex:2;min-height:38px;min-width:200px"></textarea>
-        <button class="btn primary" onclick="addProject()">Add project</button>
+      <!-- TIMELINE -->
+      <div class="panel" id="panel-timeline">
+        <div class="row">
+          <select id="tl-filter" onchange="renderTimeline()" style="min-width:130px">
+            <option value="">All activity</option>
+            <option value="status">Status changes</option>
+            <option value="timer">Time tracked</option>
+            <option value="log">Work logs</option>
+            <option value="checkin">Check-ins</option>
+            <option value="alert">Alerts</option>
+          </select>
+          <button class="btn sm danger" onclick="clearTimeline()">Clear timeline</button>
+        </div>
+        <div id="timeline-view">
+          <div class="loading">Loading timeline...</div>
+        </div>
       </div>
-      <hr class="divider">
-      <div id="proj-list"><div class="loading">Loading projects...</div></div>
-    </div>
 
-    <!-- TIMELINE -->
-    <div class="panel" id="panel-timeline">
-      <div class="row">
-        <select id="tl-filter" onchange="renderTimeline()" style="min-width:130px">
-          <option value="">All activity</option>
-          <option value="status">Status changes</option>
-          <option value="timer">Time tracked</option>
-          <option value="log">Work logs</option>
-          <option value="checkin">Check-ins</option>
-          <option value="alert">Alerts</option>
-        </select>
-        <button class="btn sm danger" onclick="clearTimeline()">Clear timeline</button>
+      <!-- ASK AI -->
+      <div class="panel" id="panel-ask">
+        <div id="ai-limit-bar"></div>
+        <div class="sec-label">Ask anything about your work</div>
+        <div class="chat-box" id="chat-msgs"></div>
+        <div class="row" style="align-items:flex-end">
+          <textarea id="ai-input" placeholder="e.g. What should I work on next? How many hours today? What's blocked?"
+            style="flex:1;min-height:52px"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();askAI()}"></textarea>
+          <button class="btn primary" id="ai-btn" onclick="askAI()">Ask</button>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">Enter to send · Shift+Enter for new line</div>
+        <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:6px">
+          <button class="btn sm" onclick="qa('How many hours did I work today?')">Hours today</button>
+          <button class="btn sm" onclick="qa('What tasks are overdue or blocked?')">Overdue / blocked</button>
+          <button class="btn sm" onclick="qa('Summarize my week including progress and time spent')">Week
+            summary</button>
+          <button class="btn sm" onclick="qa('What should I focus on next based on priority and due dates?')">What to do
+            next</button>
+        </div>
       </div>
-      <div id="timeline-view"><div class="loading">Loading timeline...</div></div>
-    </div>
 
-    <!-- ASK AI -->
-    <div class="panel" id="panel-ask">
-      <div id="ai-limit-bar"></div>
-      <div class="sec-label">Ask anything about your work</div>
-      <div class="chat-box" id="chat-msgs"></div>
-      <div class="row" style="align-items:flex-end">
-        <textarea id="ai-input" placeholder="e.g. What should I work on next? How many hours today? What's blocked?" style="flex:1;min-height:52px" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();askAI()}"></textarea>
-        <button class="btn primary" id="ai-btn" onclick="askAI()">Ask</button>
-      </div>
-      <div style="font-size:11px;color:var(--text3);margin-top:4px">Enter to send · Shift+Enter for new line</div>
-      <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:6px">
-        <button class="btn sm" onclick="qa('How many hours did I work today?')">Hours today</button>
-        <button class="btn sm" onclick="qa('What tasks are overdue or blocked?')">Overdue / blocked</button>
-        <button class="btn sm" onclick="qa('Summarize my week including progress and time spent')">Week summary</button>
-        <button class="btn sm" onclick="qa('What should I focus on next based on priority and due dates?')">What to do next</button>
-      </div>
     </div>
-
   </div>
-</div>
 
-<div id="toast"></div>
+  <div id="toast"></div>
 
-<script>
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
-// Replace these two values with your Supabase project URL and anon key
-// Found in: Supabase Dashboard → Project Settings → API
-const SUPABASE_URL = 'https://ysrfvfpsibbcpqpaxkwz.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzcmZ2ZnBzaWJiY3BxcGF4a3d6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NjQxMTYsImV4cCI6MjA4OTE0MDExNn0.m6kcp4MbgobZL6CDqwaCSny5lJdx1axHAdh3K6h35sU';
+  <script>
+    // ─── CONFIG ───────────────────────────────────────────────────────────────────
+    // Replace these two values with your Supabase project URL and anon key
+    // Found in: Supabase Dashboard → Project Settings → API
+    const SUPABASE_URL = 'https://ysrfvfpsibbcpqpaxkwz.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzcmZ2ZnBzaWJiY3BxcGF4a3d6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NjQxMTYsImV4cCI6MjA4OTE0MDExNn0.m6kcp4MbgobZL6CDqwaCSny5lJdx1axHAdh3K6h35sU';
 
-// Replace with your deployed Edge Function URL
-// Format: https://YOUR_PROJECT_ID.supabase.co/functions/v1/ai-proxy
-const AI_PROXY_URL = 'https://ysrfvfpsibbcpqpaxkwz.supabase.co/functions/v1/ai-proxy';
+    // Replace with your deployed Edge Function URL
+    // Format: https://YOUR_PROJECT_ID.supabase.co/functions/v1/ai-proxy
+    const AI_PROXY_URL = 'https://ysrfvfpsibbcpqpaxkwz.supabase.co/functions/v1/ai-proxy';
 
-// Free tier limits
-const FREE_MAX_TASKS = 20;
-const FREE_MAX_PROJECTS = 5;
-const FREE_AI_DAILY = 10;
-// ─────────────────────────────────────────────────────────────────────────────
+    // Free tier limits
+    const FREE_MAX_TASKS = 20;
+    const FREE_MAX_PROJECTS = 5;
+    const FREE_AI_DAILY = 10;
+    // ─────────────────────────────────────────────────────────────────────────────
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let currentUser = null;
-let tasks = [], projects = [], timeline = [], chat = [];
-let editTaskId = null;
-let timerInterval = null, timerStart = null, timerTaskId = null, timerElapsed = 0;
-let aiQueriesRemaining = FREE_AI_DAILY;
-let lastCheckinDate = '';
+    let currentUser = null;
+    let tasks = [], projects = [], timeline = [], chat = [];
+    let editTaskId = null;
+    let timerInterval = null, timerStart = null, timerTaskId = null, timerElapsed = 0;
+    let aiQueriesRemaining = FREE_AI_DAILY;
+    let lastCheckinDate = '';
 
-// ── UTILS ──
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function today(){return new Date().toISOString().slice(0,10);}
-function fmtTime(iso){return new Date(iso).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
-function fmtDate(iso){const t=today();const ds=iso.slice(0,10);if(ds===t)return 'Today '+fmtTime(iso);if(ds===new Date(Date.now()-86400000).toISOString().slice(0,10))return 'Yesterday '+fmtTime(iso);return new Date(iso).toLocaleDateString([],{month:'short',day:'numeric'})+' '+fmtTime(iso);}
-function fmtMins(m){m=Math.round(m||0);if(!m)return '0m';if(m<60)return m+'m';return Math.floor(m/60)+'h '+(m%60?m%60+'m':'');}
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.opacity='1';setTimeout(()=>t.style.opacity='0',1900);}
-function sbadge(s){const l={todo:'To do',inprogress:'In progress',done:'Done',blocked:'Blocked'};return `<span class="badge b-${s}">${l[s]||s}</span>`;}
-function pbadge(p){return `<span class="pri-${p}">${p.charAt(0).toUpperCase()+p.slice(1)}</span>`;}
-function timeSpent(taskId){return timeline.filter(e=>(e.type==='timer'||e.type==='log')&&e.task_id===taskId).reduce((a,e)=>a+(e.extra?.mins||0),0);}
+    // ── UTILS ──
+    function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    function today() { return new Date().toISOString().slice(0, 10); }
+    function fmtTime(iso) { return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+    function fmtDate(iso) { const t = today(); const ds = iso.slice(0, 10); if (ds === t) return 'Today ' + fmtTime(iso); if (ds === new Date(Date.now() - 86400000).toISOString().slice(0, 10)) return 'Yesterday ' + fmtTime(iso); return new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + fmtTime(iso); }
+    function fmtMins(m) { m = Math.round(m || 0); if (!m) return '0m'; if (m < 60) return m + 'm'; return Math.floor(m / 60) + 'h ' + (m % 60 ? m % 60 + 'm' : ''); }
+    function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.style.opacity = '1'; setTimeout(() => t.style.opacity = '0', 1900); }
+    function sbadge(s) { const l = { todo: 'To do', inprogress: 'In progress', done: 'Done', blocked: 'Blocked' }; return `<span class="badge b-${s}">${l[s] || s}</span>`; }
+    function pbadge(p) { return `<span class="pri-${p}">${p.charAt(0).toUpperCase() + p.slice(1)}</span>`; }
+    function timeSpent(taskId) { return timeline.filter(e => (e.type === 'timer' || e.type === 'log') && e.task_id === taskId).reduce((a, e) => a + (e.extra?.mins || 0), 0); }
 
-// ── AUTH ──
-function authTab(tab){
-  document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',['login','signup'][i]===tab));
-  document.getElementById('login-form').style.display=tab==='login'?'':'none';
-  document.getElementById('signup-form').style.display=tab==='signup'?'':'none';
-  document.getElementById('auth-err').style.display='none';
-  document.getElementById('auth-ok').style.display='none';
-}
-
-function authErr(msg){const el=document.getElementById('auth-err');el.textContent=msg;el.style.display='';}
-function authOk(msg){const el=document.getElementById('auth-ok');el.textContent=msg;el.style.display='';}
-
-async function signIn(){
-  const email=document.getElementById('login-email').value.trim();
-  const pass=document.getElementById('login-pass').value;
-  if(!email||!pass){authErr('Please fill in all fields');return;}
-  const btn=document.getElementById('login-btn');btn.disabled=true;btn.textContent='Signing in...';
-  const{error}=await sb.auth.signInWithPassword({email,password:pass});
-  btn.disabled=false;btn.textContent='Sign in';
-  if(error)authErr(error.message);
-}
-
-async function signUp(){
-  const email=document.getElementById('signup-email').value.trim();
-  const pass=document.getElementById('signup-pass').value;
-  if(!email||!pass){authErr('Please fill in all fields');return;}
-  if(pass.length<6){authErr('Password must be at least 6 characters');return;}
-  const btn=document.getElementById('signup-btn');btn.disabled=true;btn.textContent='Creating account...';
-  const{error}=await sb.auth.signUp({email,password:pass});
-  btn.disabled=false;btn.textContent='Create free account';
-  if(error)authErr(error.message);
-  else authOk('Account created! Check your email to confirm, then sign in.');
-}
-
-async function signOut(){
-  if(timerInterval)stopTimer();
-  await sb.auth.signOut();
-  localStorage.clear();
-  currentUser=null;tasks=[];projects=[];timeline=[];chat=[];
-  document.getElementById('app-screen').style.display='none';
-  document.getElementById('auth-screen').style.display='flex';
-  location.reload();
-}
-
-// ── SESSION ──
-sb.auth.onAuthStateChange(async(event,session)=>{
-  if(session?.user){
-    currentUser=session.user;
-    document.getElementById('auth-screen').style.display='none';
-    document.getElementById('app-screen').style.display='block';
-    const initials=(currentUser.email||'?').slice(0,2).toUpperCase();
-    document.getElementById('user-avatar').textContent=initials;
-    await loadAll();
-  } else {
-    document.getElementById('app-screen').style.display='none';
-    document.getElementById('auth-screen').style.display='flex';
-  }
-});
-
-// ── DATA LOADING ──
-async function loadAll(){
-  await Promise.all([loadTasks(),loadProjects(),loadTimeline()]);
-  loadCheckinDate();
-  checkAlerts();
-  renderDashboard();
-  updateDatalist();
-}
-
-async function loadTasks(){
-  const{data}=await sb.from('tasks').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
-  tasks=data||[];
-}
-async function loadProjects(){
-  const{data}=await sb.from('projects').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
-  projects=data||[];
-}
-async function loadTimeline(limit=80){
-  const{data}=await sb.from('timeline').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(limit);
-  timeline=data||[];
-}
-
-function loadCheckinDate(){
-  lastCheckinDate=localStorage.getItem('wt_checkin_'+currentUser.id)||'';
-}
-
-async function addTlEvent(type,text,taskId,extra){
-  const{data}=await sb.from('timeline').insert({user_id:currentUser.id,type,text,task_id:taskId||null,extra:extra||{}}).select().single();
-  if(data)timeline.unshift(data);
-}
-
-// ── ALERTS ──
-async function checkAlerts(){
-  const t=today();
-  for(const task of tasks){
-    if(task.due_date&&task.due_date<t&&task.status!=='done'){
-      const exists=timeline.find(e=>e.type==='alert'&&e.task_id===task.id&&e.created_at?.slice(0,10)===t);
-      if(!exists)await addTlEvent('alert',`Overdue: "${task.title}" was due ${task.due_date}`,task.id);
+    // ── AUTH ──
+    function authTab(tab) {
+      document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', ['login', 'signup'][i] === tab));
+      document.getElementById('login-form').style.display = tab === 'login' ? '' : 'none';
+      document.getElementById('signup-form').style.display = tab === 'signup' ? '' : 'none';
+      document.getElementById('auth-err').style.display = 'none';
+      document.getElementById('auth-ok').style.display = 'none';
     }
-  }
-  const hour=new Date().getHours();
-  if(lastCheckinDate!==t&&hour>=9){
-    const exists=timeline.find(e=>e.type==='alert'&&e.text.includes('check-in')&&e.created_at?.slice(0,10)===t);
-    if(!exists)await addTlEvent('alert','Daily check-in pending — share what you are working on today');
-  }
-}
 
-// ── TABS ──
-function sw(name){
-  const names=['dashboard','tracker','tasks','projects','timeline','ask'];
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',names[i]===name));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('panel-'+name).classList.add('active');
-  if(name==='dashboard')renderDashboard();
-  if(name==='tasks')renderTasks();
-  if(name==='projects')renderProjects();
-  if(name==='timeline')renderTimeline();
-  if(name==='ask')renderChat();
-  if(name==='tracker')populateTimerSelects();
-}
+    function authErr(msg) { const el = document.getElementById('auth-err'); el.textContent = msg; el.style.display = ''; }
+    function authOk(msg) { const el = document.getElementById('auth-ok'); el.textContent = msg; el.style.display = ''; }
 
-function updateDatalist(){
-  const dl=document.getElementById('proj-dl');
-  if(dl)dl.innerHTML=projects.map(p=>`<option value="${esc(p.name)}">`).join('');
-  const activeTasks=tasks.filter(t=>t.status!=='done');
-  const opts=`<option value="">Select task...</option>`+activeTasks.map(t=>`<option value="${t.id}">${esc(t.title)}</option>`).join('');
-  ['timer-task-sel','log-task'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
-}
+    async function signIn() {
+      const email = document.getElementById('login-email').value.trim();
+      const pass = document.getElementById('login-pass').value;
+      if (!email || !pass) { authErr('Please fill in all fields'); return; }
+      const btn = document.getElementById('login-btn'); btn.disabled = true; btn.textContent = 'Signing in...';
+      const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+      btn.disabled = false; btn.textContent = 'Sign in';
+      if (error) authErr(error.message);
+    }
 
-// ── DASHBOARD ──
-function renderDashboard(){
-  const t=today();
-  const todayMins=timeline.filter(e=>e.created_at?.slice(0,10)===t&&(e.type==='timer'||e.type==='log')).reduce((a,e)=>a+(e.extra?.mins||0),0);
-  const done=tasks.filter(x=>x.status==='done').length;
-  const overdue=tasks.filter(x=>x.due_date&&x.due_date<t&&x.status!=='done').length;
-  const inprog=tasks.filter(x=>x.status==='inprogress').length;
-  document.getElementById('db-metrics').innerHTML=`
+    async function signUp() {
+      const email = document.getElementById('signup-email').value.trim();
+      const pass = document.getElementById('signup-pass').value;
+      if (!email || !pass) { authErr('Please fill in all fields'); return; }
+      if (pass.length < 6) { authErr('Password must be at least 6 characters'); return; }
+      const btn = document.getElementById('signup-btn'); btn.disabled = true; btn.textContent = 'Creating account...';
+      const { error } = await sb.auth.signUp({ email, password: pass });
+      btn.disabled = false; btn.textContent = 'Create free account';
+      if (error) authErr(error.message);
+      else authOk('Account created! Check your email to confirm, then sign in.');
+    }
+
+    async function signOut() {
+      try {
+        if (timerInterval) await stopTimer();
+        const { error } = await sb.auth.signOut();
+        if (error) console.error('Supabase signOut error:', error);
+      } catch (e) {
+        console.error('Error during signOut():', e);
+      } finally {
+        try { localStorage.clear(); } catch (_) { }
+        currentUser = null; tasks = []; projects = []; timeline = []; chat = [];
+        const app = document.getElementById('app-screen');
+        const auth = document.getElementById('auth-screen');
+        if (app) app.style.display = 'none';
+        if (auth) auth.style.display = 'flex';
+        window.location.reload();
+      }
+    }
+
+    // ── SESSION ──
+    sb.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        currentUser = session.user;
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('app-screen').style.display = 'block';
+        const initials = (currentUser.email || '?').slice(0, 2).toUpperCase();
+        document.getElementById('user-avatar').textContent = initials;
+        await loadAll();
+      } else {
+        document.getElementById('app-screen').style.display = 'none';
+        document.getElementById('auth-screen').style.display = 'flex';
+      }
+    });
+
+    // ── DATA LOADING ──
+    async function loadAll() {
+      await Promise.all([loadTasks(), loadProjects(), loadTimeline()]);
+      loadCheckinDate();
+      checkAlerts();
+      renderDashboard();
+      updateDatalist();
+    }
+
+    async function loadTasks() {
+      const { data } = await sb.from('tasks').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+      tasks = data || [];
+    }
+    async function loadProjects() {
+      const { data } = await sb.from('projects').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+      projects = data || [];
+    }
+    async function loadTimeline(limit = 80) {
+      const { data } = await sb.from('timeline').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(limit);
+      timeline = data || [];
+    }
+
+    function loadCheckinDate() {
+      lastCheckinDate = localStorage.getItem('wt_checkin_' + currentUser.id) || '';
+    }
+
+    async function addTlEvent(type, text, taskId, extra) {
+      const { data } = await sb.from('timeline').insert({ user_id: currentUser.id, type, text, task_id: taskId || null, extra: extra || {} }).select().single();
+      if (data) timeline.unshift(data);
+    }
+
+    // ── ALERTS ──
+    async function checkAlerts() {
+      const t = today();
+      for (const task of tasks) {
+        if (task.due_date && task.due_date < t && task.status !== 'done') {
+          const exists = timeline.find(e => e.type === 'alert' && e.task_id === task.id && e.created_at?.slice(0, 10) === t);
+          if (!exists) await addTlEvent('alert', `Overdue: "${task.title}" was due ${task.due_date}`, task.id);
+        }
+      }
+      const hour = new Date().getHours();
+      if (lastCheckinDate !== t && hour >= 9) {
+        const exists = timeline.find(e => e.type === 'alert' && e.text.includes('check-in') && e.created_at?.slice(0, 10) === t);
+        if (!exists) await addTlEvent('alert', 'Daily check-in pending — share what you are working on today');
+      }
+    }
+
+    // ── TABS ──
+    function sw(name) {
+      const names = ['dashboard', 'tracker', 'tasks', 'projects', 'timeline', 'ask'];
+      document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', names[i] === name));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-' + name).classList.add('active');
+      if (name === 'dashboard') renderDashboard();
+      if (name === 'tasks') renderTasks();
+      if (name === 'projects') renderProjects();
+      if (name === 'timeline') renderTimeline();
+      if (name === 'ask') renderChat();
+      if (name === 'tracker') populateTimerSelects();
+    }
+
+    function updateDatalist() {
+      const dl = document.getElementById('proj-dl');
+      if (dl) dl.innerHTML = projects.map(p => `<option value="${esc(p.name)}">`).join('');
+      const activeTasks = tasks.filter(t => t.status !== 'done');
+      const opts = `<option value="">Select task...</option>` + activeTasks.map(t => `<option value="${t.id}">${esc(t.title)}</option>`).join('');
+      ['timer-task-sel', 'log-task'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = opts; });
+    }
+
+    // ── DASHBOARD ──
+    function renderDashboard() {
+      const t = today();
+      const todayMins = timeline.filter(e => e.created_at?.slice(0, 10) === t && (e.type === 'timer' || e.type === 'log')).reduce((a, e) => a + (e.extra?.mins || 0), 0);
+      const done = tasks.filter(x => x.status === 'done').length;
+      const overdue = tasks.filter(x => x.due_date && x.due_date < t && x.status !== 'done').length;
+      const inprog = tasks.filter(x => x.status === 'inprogress').length;
+      document.getElementById('db-metrics').innerHTML = `
     <div class="metric"><div class="metric-val">${fmtMins(todayMins)}</div><div class="metric-label">Today logged</div></div>
     <div class="metric"><div class="metric-val">${inprog}</div><div class="metric-label">In progress</div></div>
     <div class="metric"><div class="metric-val">${done}</div><div class="metric-label">Tasks done</div></div>
-    <div class="metric" style="${overdue?'background:var(--danger-bg)':''}"><div class="metric-val" style="${overdue?'color:var(--danger-text)':''}">${overdue}</div><div class="metric-label">Overdue</div></div>`;
-  const alerts=timeline.filter(e=>e.type==='alert'&&e.created_at?.slice(0,10)===t);
-  document.getElementById('db-alerts').innerHTML=alerts.map(a=>`<div class="alert-card">${esc(a.text)}</div>`).join('');
-  document.getElementById('db-checkin').innerHTML=lastCheckinDate!==t?`<div class="checkin-card" style="margin-bottom:1rem"><span style="font-size:13px;color:var(--info-text);font-weight:500">No check-in today</span> <button class="btn sm" style="margin-left:8px" onclick="sw('tracker')">Check in now</button></div>`:'';
-  const timerTask=timerTaskId?tasks.find(x=>x.id===timerTaskId):null;
-  document.getElementById('db-timer').innerHTML=timerInterval?`<div style="font-size:13px;color:var(--text2)">Tracking: <strong>${esc(timerTask?.title||'task')}</strong> <span id="db-timer-val" style="font-family:monospace;font-weight:500"></span> <button class="btn sm" onclick="sw('tracker')">View</button></div>`:`<div style="font-size:13px;color:var(--text3)">No active timer. <button class="btn sm" onclick="sw('tracker')">Start tracking</button></div>`;
-  document.getElementById('db-recent').innerHTML=timeline.length?tlItems(timeline.slice(0,8)):'<div class="empty">No activity yet.</div>';
-}
+    <div class="metric" style="${overdue ? 'background:var(--danger-bg)' : ''}"><div class="metric-val" style="${overdue ? 'color:var(--danger-text)' : ''}">${overdue}</div><div class="metric-label">Overdue</div></div>`;
+      const alerts = timeline.filter(e => e.type === 'alert' && e.created_at?.slice(0, 10) === t);
+      document.getElementById('db-alerts').innerHTML = alerts.map(a => `<div class="alert-card">${esc(a.text)}</div>`).join('');
+      document.getElementById('db-checkin').innerHTML = lastCheckinDate !== t ? `<div class="checkin-card" style="margin-bottom:1rem"><span style="font-size:13px;color:var(--info-text);font-weight:500">No check-in today</span> <button class="btn sm" style="margin-left:8px" onclick="sw('tracker')">Check in now</button></div>` : '';
+      const timerTask = timerTaskId ? tasks.find(x => x.id === timerTaskId) : null;
+      document.getElementById('db-timer').innerHTML = timerInterval ? `<div style="font-size:13px;color:var(--text2)">Tracking: <strong>${esc(timerTask?.title || 'task')}</strong> <span id="db-timer-val" style="font-family:monospace;font-weight:500"></span> <button class="btn sm" onclick="sw('tracker')">View</button></div>` : `<div style="font-size:13px;color:var(--text3)">No active timer. <button class="btn sm" onclick="sw('tracker')">Start tracking</button></div>`;
+      document.getElementById('db-recent').innerHTML = timeline.length ? tlItems(timeline.slice(0, 8)) : '<div class="empty">No activity yet.</div>';
+    }
 
-function tlItems(items){
-  return items.map((e,i)=>{
-    const dc={status:'tl-dot-status',log:'tl-dot-log',alert:'tl-dot-alert',checkin:'tl-dot-checkin',timer:'tl-dot-timer'}[e.type]||'tl-dot-log';
-    const bmap={alert:`<span class="badge b-alert">Alert</span>`,checkin:`<span class="badge b-checkin">Check-in</span>`,log:`<span class="badge b-log">Log</span>`,timer:`<span class="badge b-log">Timer</span>`,status:''};
-    return `<div class="tl-item">
-      <div class="tl-line"><div class="tl-dot ${dc}"></div>${i<items.length-1?'<div class="tl-connector"></div>':''}</div>
+    function tlItems(items) {
+      return items.map((e, i) => {
+        const dc = { status: 'tl-dot-status', log: 'tl-dot-log', alert: 'tl-dot-alert', checkin: 'tl-dot-checkin', timer: 'tl-dot-timer' }[e.type] || 'tl-dot-log';
+        const bmap = { alert: `<span class="badge b-alert">Alert</span>`, checkin: `<span class="badge b-checkin">Check-in</span>`, log: `<span class="badge b-log">Log</span>`, timer: `<span class="badge b-log">Timer</span>`, status: '' };
+        return `<div class="tl-item">
+      <div class="tl-line"><div class="tl-dot ${dc}"></div>${i < items.length - 1 ? '<div class="tl-connector"></div>' : ''}</div>
       <div class="tl-body">
         <div class="tl-time">${fmtDate(e.created_at)}</div>
-        <div class="tl-text">${esc(e.text)}${e.extra?.mins?' <span style="color:var(--text3);font-size:12px">· '+fmtMins(e.extra.mins)+'</span>':''}</div>
-        <div class="tl-meta">${e.type==='status'?(e.extra?.from?sbadge(e.extra.from)+' → ':'')+sbadge(e.extra?.to||'todo'):bmap[e.type]||''} ${e.extra?.mood?'· '+e.extra.mood:''}</div>
+        <div class="tl-text">${esc(e.text)}${e.extra?.mins ? ' <span style="color:var(--text3);font-size:12px">· ' + fmtMins(e.extra.mins) + '</span>' : ''}</div>
+        <div class="tl-meta">${e.type === 'status' ? (e.extra?.from ? sbadge(e.extra.from) + ' → ' : '') + sbadge(e.extra?.to || 'todo') : bmap[e.type] || ''} ${e.extra?.mood ? '· ' + e.extra.mood : ''}</div>
       </div>
     </div>`;
-  }).join('');
-}
+      }).join('');
+    }
 
-function renderTimeline(){
-  const ftype=document.getElementById('tl-filter')?.value||'';
-  const items=timeline.filter(e=>!ftype||e.type===ftype);
-  document.getElementById('timeline-view').innerHTML=items.length?tlItems(items):'<div class="empty">No activity yet.</div>';
-}
+    function renderTimeline() {
+      const ftype = document.getElementById('tl-filter')?.value || '';
+      const items = timeline.filter(e => !ftype || e.type === ftype);
+      document.getElementById('timeline-view').innerHTML = items.length ? tlItems(items) : '<div class="empty">No activity yet.</div>';
+    }
 
-async function clearTimeline(){
-  if(!confirm('Clear all timeline history?'))return;
-  await sb.from('timeline').delete().eq('user_id',currentUser.id);
-  timeline=[];renderTimeline();renderDashboard();toast('Timeline cleared');
-}
+    async function clearTimeline() {
+      if (!confirm('Clear all timeline history?')) return;
+      await sb.from('timeline').delete().eq('user_id', currentUser.id);
+      timeline = []; renderTimeline(); renderDashboard(); toast('Timeline cleared');
+    }
 
-// ── TASKS ──
-async function addTask(){
-  const title=document.getElementById('t-title').value.trim();
-  if(!title){toast('Title required');return;}
-  if(!editTaskId&&tasks.length>=FREE_MAX_TASKS){toast(`Free plan limit: ${FREE_MAX_TASKS} tasks`);return;}
-  const payload={user_id:currentUser.id,title,project:document.getElementById('t-proj').value.trim(),status:document.getElementById('t-status').value,priority:document.getElementById('t-priority').value,due_date:document.getElementById('t-due').value||null,description:document.getElementById('t-desc').value.trim()};
-  if(editTaskId){
-    const old=tasks.find(t=>t.id===editTaskId);
-    const{data}=await sb.from('tasks').update({...payload,updated_at:new Date().toISOString()}).eq('id',editTaskId).select().single();
-    if(data){tasks=tasks.map(t=>t.id===editTaskId?data:t);if(old.status!==data.status)await addTlEvent('status',`"${data.title}" moved: ${old.status} → ${data.status}`,data.id,{from:old.status,to:data.status});}
-    editTaskId=null;document.getElementById('t-submit').textContent='Add task';toast('Task updated');
-  } else {
-    const{data}=await sb.from('tasks').insert(payload).select().single();
-    if(data){tasks.unshift(data);await addTlEvent('status',`New task created: "${data.title}"`,data.id,{to:data.status});}
-    toast('Task added');
-  }
-  clearTaskForm();renderTasks();renderDashboard();updateDatalist();
-}
+    // ── TASKS ──
+    async function addTask() {
+      const title = document.getElementById('t-title').value.trim();
+      if (!title) { toast('Title required'); return; }
+      if (!editTaskId && tasks.length >= FREE_MAX_TASKS) { toast(`Free plan limit: ${FREE_MAX_TASKS} tasks`); return; }
+      const payload = { user_id: currentUser.id, title, project: document.getElementById('t-proj').value.trim(), status: document.getElementById('t-status').value, priority: document.getElementById('t-priority').value, due_date: document.getElementById('t-due').value || null, description: document.getElementById('t-desc').value.trim() };
+      if (editTaskId) {
+        const old = tasks.find(t => t.id === editTaskId);
+        const { data } = await sb.from('tasks').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', editTaskId).select().single();
+        if (data) { tasks = tasks.map(t => t.id === editTaskId ? data : t); if (old.status !== data.status) await addTlEvent('status', `"${data.title}" moved: ${old.status} → ${data.status}`, data.id, { from: old.status, to: data.status }); }
+        editTaskId = null; document.getElementById('t-submit').textContent = 'Add task'; toast('Task updated');
+      } else {
+        const { data } = await sb.from('tasks').insert(payload).select().single();
+        if (data) { tasks.unshift(data); await addTlEvent('status', `New task created: "${data.title}"`, data.id, { to: data.status }); }
+        toast('Task added');
+      }
+      clearTaskForm(); renderTasks(); renderDashboard(); updateDatalist();
+    }
 
-async function changeStatus(id,newStatus){
-  const t=tasks.find(x=>x.id===id);if(!t)return;
-  const old=t.status;
-  await sb.from('tasks').update({status:newStatus,updated_at:new Date().toISOString()}).eq('id',id);
-  t.status=newStatus;
-  await addTlEvent('status',`"${t.title}" moved: ${old} → ${newStatus}`,id,{from:old,to:newStatus});
-  renderTasks();renderDashboard();toast('Status updated');
-}
+    async function changeStatus(id, newStatus) {
+      const t = tasks.find(x => x.id === id); if (!t) return;
+      const old = t.status;
+      await sb.from('tasks').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', id);
+      t.status = newStatus;
+      await addTlEvent('status', `"${t.title}" moved: ${old} → ${newStatus}`, id, { from: old, to: newStatus });
+      renderTasks(); renderDashboard(); toast('Status updated');
+    }
 
-async function deleteTask(id){
-  if(!confirm('Delete this task?'))return;
-  await sb.from('tasks').delete().eq('id',id);
-  tasks=tasks.filter(t=>t.id!==id);
-  renderTasks();renderDashboard();updateDatalist();toast('Deleted');
-}
+    async function deleteTask(id) {
+      if (!confirm('Delete this task?')) return;
+      await sb.from('tasks').delete().eq('id', id);
+      tasks = tasks.filter(t => t.id !== id);
+      renderTasks(); renderDashboard(); updateDatalist(); toast('Deleted');
+    }
 
-function editTask(id){
-  const t=tasks.find(x=>x.id===id);if(!t)return;
-  sw('tasks');
-  document.getElementById('t-title').value=t.title;
-  document.getElementById('t-proj').value=t.project||'';
-  document.getElementById('t-status').value=t.status;
-  document.getElementById('t-priority').value=t.priority;
-  document.getElementById('t-due').value=t.due_date||'';
-  document.getElementById('t-desc').value=t.description||'';
-  editTaskId=id;
-  document.getElementById('t-submit').textContent='Save changes';
-  window.scrollTo(0,0);
-}
+    function editTask(id) {
+      const t = tasks.find(x => x.id === id); if (!t) return;
+      sw('tasks');
+      document.getElementById('t-title').value = t.title;
+      document.getElementById('t-proj').value = t.project || '';
+      document.getElementById('t-status').value = t.status;
+      document.getElementById('t-priority').value = t.priority;
+      document.getElementById('t-due').value = t.due_date || '';
+      document.getElementById('t-desc').value = t.description || '';
+      editTaskId = id;
+      document.getElementById('t-submit').textContent = 'Save changes';
+      window.scrollTo(0, 0);
+    }
 
-function clearTaskForm(){
-  ['t-title','t-proj','t-due','t-desc'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  document.getElementById('t-status').value='todo';
-  document.getElementById('t-priority').value='medium';
-  editTaskId=null;
-  document.getElementById('t-submit').textContent='Add task';
-}
+    function clearTaskForm() {
+      ['t-title', 't-proj', 't-due', 't-desc'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+      document.getElementById('t-status').value = 'todo';
+      document.getElementById('t-priority').value = 'medium';
+      editTaskId = null;
+      document.getElementById('t-submit').textContent = 'Add task';
+    }
 
-function renderTasks(){
-  const search=(document.getElementById('t-search')||{value:''}).value.toLowerCase();
-  const fs=(document.getElementById('t-fstatus')||{value:''}).value;
-  const fp=(document.getElementById('t-fpriority')||{value:''}).value;
-  const t=today();
-  const atLimit=tasks.length>=FREE_MAX_TASKS;
-  const warn=document.getElementById('task-limit-warn');
-  if(warn)warn.innerHTML=atLimit?`<div class="limit-bar">You've reached the free plan limit of ${FREE_MAX_TASKS} tasks. Delete some tasks to add more.</div>`:'';
-  const filtered=tasks.filter(x=>{
-    const ms=!search||(x.title+x.project+(x.description||'')).toLowerCase().includes(search);
-    return ms&&(!fs||x.status===fs)&&(!fp||x.priority===fp);
-  }).sort((a,b)=>({high:0,medium:1,low:2}[a.priority]||1)-({high:0,medium:1,low:2}[b.priority]||1));
-  document.getElementById('task-list').innerHTML=filtered.length?filtered.map(task=>{
-    const ov=task.due_date&&task.due_date<t&&task.status!=='done';
-    const spent=timeSpent(task.id);
-    return `<div class="card">
+    function renderTasks() {
+      const search = (document.getElementById('t-search') || { value: '' }).value.toLowerCase();
+      const fs = (document.getElementById('t-fstatus') || { value: '' }).value;
+      const fp = (document.getElementById('t-fpriority') || { value: '' }).value;
+      const t = today();
+      const atLimit = tasks.length >= FREE_MAX_TASKS;
+      const warn = document.getElementById('task-limit-warn');
+      if (warn) warn.innerHTML = atLimit ? `<div class="limit-bar">You've reached the free plan limit of ${FREE_MAX_TASKS} tasks. Delete some tasks to add more.</div>` : '';
+      const filtered = tasks.filter(x => {
+        const ms = !search || (x.title + x.project + (x.description || '')).toLowerCase().includes(search);
+        return ms && (!fs || x.status === fs) && (!fp || x.priority === fp);
+      }).sort((a, b) => ({ high: 0, medium: 1, low: 2 }[a.priority] || 1) - ({ high: 0, medium: 1, low: 2 }[b.priority] || 1));
+      document.getElementById('task-list').innerHTML = filtered.length ? filtered.map(task => {
+        const ov = task.due_date && task.due_date < t && task.status !== 'done';
+        const spent = timeSpent(task.id);
+        return `<div class="card">
       <div style="display:flex;align-items:flex-start;gap:8px">
         <div style="flex:1">
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
@@ -610,18 +1221,18 @@ function renderTasks(){
             ${sbadge(task.status)} ${pbadge(task.priority)}
           </div>
           <div style="font-size:12px;color:var(--text3);margin-top:3px">
-            ${task.project?`<strong style="color:var(--text2)">${esc(task.project)}</strong> &middot; `:''}
-            ${task.due_date?`<span style="${ov?'color:var(--danger-text);font-weight:600':''}">Due ${task.due_date}${ov?' (overdue)':''}</span>`:'No due date'}
-            ${spent>0?` &middot; <span style="color:var(--info-text)">${fmtMins(spent)} logged</span>`:''}
+            ${task.project ? `<strong style="color:var(--text2)">${esc(task.project)}</strong> &middot; ` : ''}
+            ${task.due_date ? `<span style="${ov ? 'color:var(--danger-text);font-weight:600' : ''}">Due ${task.due_date}${ov ? ' (overdue)' : ''}</span>` : 'No due date'}
+            ${spent > 0 ? ` &middot; <span style="color:var(--info-text)">${fmtMins(spent)} logged</span>` : ''}
           </div>
-          ${task.description?`<div style="font-size:13px;color:var(--text2);margin-top:5px">${esc(task.description)}</div>`:''}
+          ${task.description ? `<div style="font-size:13px;color:var(--text2);margin-top:5px">${esc(task.description)}</div>` : ''}
         </div>
         <div style="display:flex;gap:4px;flex-wrap:wrap;flex-shrink:0">
           <select class="btn sm" onchange="changeStatus('${task.id}',this.value)" style="padding:4px 6px">
-            <option value="todo"${task.status==='todo'?' selected':''}>To do</option>
-            <option value="inprogress"${task.status==='inprogress'?' selected':''}>In progress</option>
-            <option value="done"${task.status==='done'?' selected':''}>Done</option>
-            <option value="blocked"${task.status==='blocked'?' selected':''}>Blocked</option>
+            <option value="todo"${task.status === 'todo' ? ' selected' : ''}>To do</option>
+            <option value="inprogress"${task.status === 'inprogress' ? ' selected' : ''}>In progress</option>
+            <option value="done"${task.status === 'done' ? ' selected' : ''}>Done</option>
+            <option value="blocked"${task.status === 'blocked' ? ' selected' : ''}>Blocked</option>
           </select>
           <button class="btn sm" onclick="startTimerFor('${task.id}')">Timer</button>
           <button class="btn sm" onclick="editTask('${task.id}')">Edit</button>
@@ -629,189 +1240,190 @@ function renderTasks(){
         </div>
       </div>
     </div>`;
-  }).join(''):'<div class="empty">No tasks match your filters.</div>';
-}
+      }).join('') : '<div class="empty">No tasks match your filters.</div>';
+    }
 
-// ── PROJECTS ──
-async function addProject(){
-  const name=document.getElementById('p-name').value.trim();
-  if(!name){toast('Name required');return;}
-  if(projects.length>=FREE_MAX_PROJECTS){toast(`Free plan limit: ${FREE_MAX_PROJECTS} projects`);return;}
-  if(projects.find(p=>p.name===name)){toast('Already exists');return;}
-  const{data}=await sb.from('projects').insert({user_id:currentUser.id,name,description:document.getElementById('p-desc').value.trim()}).select().single();
-  if(data)projects.unshift(data);
-  document.getElementById('p-name').value='';document.getElementById('p-desc').value='';
-  renderProjects();updateDatalist();toast('Project added');
-}
+    // ── PROJECTS ──
+    async function addProject() {
+      const name = document.getElementById('p-name').value.trim();
+      if (!name) { toast('Name required'); return; }
+      if (projects.length >= FREE_MAX_PROJECTS) { toast(`Free plan limit: ${FREE_MAX_PROJECTS} projects`); return; }
+      if (projects.find(p => p.name === name)) { toast('Already exists'); return; }
+      const { data } = await sb.from('projects').insert({ user_id: currentUser.id, name, description: document.getElementById('p-desc').value.trim() }).select().single();
+      if (data) projects.unshift(data);
+      document.getElementById('p-name').value = ''; document.getElementById('p-desc').value = '';
+      renderProjects(); updateDatalist(); toast('Project added');
+    }
 
-async function deleteProject(id){
-  if(!confirm('Delete project?'))return;
-  await sb.from('projects').delete().eq('id',id);
-  projects=projects.filter(p=>p.id!==id);
-  renderProjects();updateDatalist();toast('Deleted');
-}
+    async function deleteProject(id) {
+      if (!confirm('Delete project?')) return;
+      await sb.from('projects').delete().eq('id', id);
+      projects = projects.filter(p => p.id !== id);
+      renderProjects(); updateDatalist(); toast('Deleted');
+    }
 
-function renderProjects(){
-  const atLimit=projects.length>=FREE_MAX_PROJECTS;
-  const warn=document.getElementById('proj-limit-warn');
-  if(warn)warn.innerHTML=atLimit?`<div class="limit-bar">You've reached the free plan limit of ${FREE_MAX_PROJECTS} projects.</div>`:'';
-  const pl=document.getElementById('proj-list');if(!pl)return;
-  pl.innerHTML=projects.length?projects.map(p=>{
-    const pt=tasks.filter(t=>t.project===p.name);
-    const done=pt.filter(t=>t.status==='done').length;
-    const pct=pt.length?Math.round(done/pt.length*100):0;
-    const spent=pt.reduce((a,t)=>a+timeSpent(t.id),0);
-    return `<div class="card">
+    function renderProjects() {
+      const atLimit = projects.length >= FREE_MAX_PROJECTS;
+      const warn = document.getElementById('proj-limit-warn');
+      if (warn) warn.innerHTML = atLimit ? `<div class="limit-bar">You've reached the free plan limit of ${FREE_MAX_PROJECTS} projects.</div>` : '';
+      const pl = document.getElementById('proj-list'); if (!pl) return;
+      pl.innerHTML = projects.length ? projects.map(p => {
+        const pt = tasks.filter(t => t.project === p.name);
+        const done = pt.filter(t => t.status === 'done').length;
+        const pct = pt.length ? Math.round(done / pt.length * 100) : 0;
+        const spent = pt.reduce((a, t) => a + timeSpent(t.id), 0);
+        return `<div class="card">
       <div style="display:flex;align-items:flex-start;gap:8px">
         <div style="flex:1">
           <div style="font-size:14px;font-weight:500">${esc(p.name)}</div>
-          ${p.description?`<div style="font-size:13px;color:var(--text2);margin-top:3px">${esc(p.description)}</div>`:''}
+          ${p.description ? `<div style="font-size:13px;color:var(--text2);margin-top:3px">${esc(p.description)}</div>` : ''}
           <div style="font-size:12px;color:var(--text3);margin-top:5px">${pt.length} tasks &middot; ${done} done &middot; ${pct}% &middot; ${fmtMins(spent)} logged</div>
           <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
         </div>
         <button class="btn sm danger" onclick="deleteProject('${p.id}')">Delete</button>
       </div>
     </div>`;
-  }).join(''):'<div class="empty">No projects yet. Add one above.</div>';
-}
+      }).join('') : '<div class="empty">No projects yet. Add one above.</div>';
+    }
 
-// ── TIMER ──
-function populateTimerSelects(){
-  const activeTasks=tasks.filter(t=>t.status!=='done');
-  const el=document.getElementById('timer-task-sel');
-  if(el)el.innerHTML=`<option value="">Select a task...</option>`+activeTasks.map(t=>`<option value="${t.id}"${timerTaskId===t.id?' selected':''}>${esc(t.title)}</option>`).join('');
-}
+    // ── TIMER ──
+    function populateTimerSelects() {
+      const activeTasks = tasks.filter(t => t.status !== 'done');
+      const el = document.getElementById('timer-task-sel');
+      if (el) el.innerHTML = `<option value="">Select a task...</option>` + activeTasks.map(t => `<option value="${t.id}"${timerTaskId === t.id ? ' selected' : ''}>${esc(t.title)}</option>`).join('');
+    }
 
-function toggleTimer(){
-  if(timerInterval)stopTimer();
-  else{const sel=document.getElementById('timer-task-sel');startTimer(sel?sel.value:'');}
-}
+    function toggleTimer() {
+      if (timerInterval) stopTimer();
+      else { const sel = document.getElementById('timer-task-sel'); startTimer(sel ? sel.value : ''); }
+    }
 
-function startTimerFor(taskId){
-  sw('tracker');
-  if(timerInterval)stopTimer();
-  setTimeout(()=>{
-    const sel=document.getElementById('timer-task-sel');
-    if(sel)sel.value=taskId;
-    startTimer(taskId);
-  },80);
-}
+    function startTimerFor(taskId) {
+      sw('tracker');
+      if (timerInterval) stopTimer();
+      setTimeout(() => {
+        const sel = document.getElementById('timer-task-sel');
+        if (sel) sel.value = taskId;
+        startTimer(taskId);
+      }, 80);
+    }
 
-function startTimer(taskId){
-  timerTaskId=taskId||null;
-  timerStart=Date.now()-timerElapsed*1000;
-  timerInterval=setInterval(()=>{
-    const elapsed=Math.floor((Date.now()-timerStart)/1000);
-    timerElapsed=elapsed;
-    const h=Math.floor(elapsed/3600),m=Math.floor((elapsed%3600)/60),s=elapsed%60;
-    const str=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-    const td=document.getElementById('timer-display');if(td)td.textContent=str;
-    const dv=document.getElementById('db-timer-val');if(dv)dv.textContent=str;
-  },1000);
-  const btn=document.getElementById('timer-btn');if(btn)btn.textContent='Stop';
-  const name=timerTaskId?tasks.find(t=>t.id===timerTaskId)?.title||'task':'No task';
-  const lbl=document.getElementById('timer-task-label');if(lbl)lbl.textContent='Tracking: '+name;
-  toast('Timer started');
-}
+    function startTimer(taskId) {
+      timerTaskId = taskId || null;
+      timerStart = Date.now() - timerElapsed * 1000;
+      timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - timerStart) / 1000);
+        timerElapsed = elapsed;
+        const h = Math.floor(elapsed / 3600), m = Math.floor((elapsed % 3600) / 60), s = elapsed % 60;
+        const str = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        const td = document.getElementById('timer-display'); if (td) td.textContent = str;
+        const dv = document.getElementById('db-timer-val'); if (dv) dv.textContent = str;
+      }, 1000);
+      const btn = document.getElementById('timer-btn'); if (btn) btn.textContent = 'Stop';
+      const name = timerTaskId ? tasks.find(t => t.id === timerTaskId)?.title || 'task' : 'No task';
+      const lbl = document.getElementById('timer-task-label'); if (lbl) lbl.textContent = 'Tracking: ' + name;
+      toast('Timer started');
+    }
 
-async function stopTimer(){
-  if(!timerInterval)return;
-  clearInterval(timerInterval);timerInterval=null;
-  const mins=Math.max(1,Math.round(timerElapsed/60));
-  if(timerTaskId&&mins>0){
-    const task=tasks.find(t=>t.id===timerTaskId);
-    await addTlEvent('timer',`Tracked ${fmtMins(mins)} on "${task?.title||'task'}"`,timerTaskId,{mins});
-  }
-  timerElapsed=0;timerTaskId=null;
-  const td=document.getElementById('timer-display');if(td)td.textContent='00:00:00';
-  const lbl=document.getElementById('timer-task-label');if(lbl)lbl.textContent='No task selected';
-  const btn=document.getElementById('timer-btn');if(btn)btn.textContent='Start';
-  renderDashboard();toast('Timer stopped and logged');
-}
+    async function stopTimer() {
+      if (!timerInterval) return;
+      clearInterval(timerInterval); timerInterval = null;
+      const mins = Math.max(1, Math.round(timerElapsed / 60));
+      if (timerTaskId && mins > 0) {
+        const task = tasks.find(t => t.id === timerTaskId);
+        await addTlEvent('timer', `Tracked ${fmtMins(mins)} on "${task?.title || 'task'}"`, timerTaskId, { mins });
+      }
+      timerElapsed = 0; timerTaskId = null;
+      const td = document.getElementById('timer-display'); if (td) td.textContent = '00:00:00';
+      const lbl = document.getElementById('timer-task-label'); if (lbl) lbl.textContent = 'No task selected';
+      const btn = document.getElementById('timer-btn'); if (btn) btn.textContent = 'Start';
+      renderDashboard(); toast('Timer stopped and logged');
+    }
 
-async function lapTimer(){
-  if(!timerInterval){toast('Start timer first');return;}
-  const mins=Math.max(1,Math.round(timerElapsed/60));
-  const task=timerTaskId?tasks.find(t=>t.id===timerTaskId):null;
-  await addTlEvent('timer',`Lap: ${fmtMins(mins)} on "${task?.title||'task'}"`,timerTaskId||null,{mins});
-  timerStart=Date.now();timerElapsed=0;
-  renderDashboard();toast('Lap logged');
-}
+    async function lapTimer() {
+      if (!timerInterval) { toast('Start timer first'); return; }
+      const mins = Math.max(1, Math.round(timerElapsed / 60));
+      const task = timerTaskId ? tasks.find(t => t.id === timerTaskId) : null;
+      await addTlEvent('timer', `Lap: ${fmtMins(mins)} on "${task?.title || 'task'}"`, timerTaskId || null, { mins });
+      timerStart = Date.now(); timerElapsed = 0;
+      renderDashboard(); toast('Lap logged');
+    }
 
-async function addManualLog(){
-  const note=document.getElementById('log-note').value.trim();
-  if(!note){toast('Add a note');return;}
-  const taskId=document.getElementById('log-task').value||null;
-  const mins=parseInt(document.getElementById('log-mins').value)||0;
-  const task=taskId?tasks.find(t=>t.id===taskId):null;
-  await addTlEvent('log',note+(task?` [${task.title}]`:''),taskId,{mins});
-  document.getElementById('log-note').value='';document.getElementById('log-mins').value='';
-  renderDashboard();toast('Work logged');
-}
+    async function addManualLog() {
+      const note = document.getElementById('log-note').value.trim();
+      if (!note) { toast('Add a note'); return; }
+      const taskId = document.getElementById('log-task').value || null;
+      const mins = parseInt(document.getElementById('log-mins').value) || 0;
+      const task = taskId ? tasks.find(t => t.id === taskId) : null;
+      await addTlEvent('log', note + (task ? ` [${task.title}]` : ''), taskId, { mins });
+      document.getElementById('log-note').value = ''; document.getElementById('log-mins').value = '';
+      renderDashboard(); toast('Work logged');
+    }
 
-async function submitCheckin(){
-  const text=document.getElementById('checkin-text').value.trim();
-  if(!text){toast('Write something first');return;}
-  const mood=document.getElementById('checkin-mood').value;
-  await addTlEvent('checkin',text,null,{mood});
-  lastCheckinDate=today();
-  localStorage.setItem('wt_checkin_'+currentUser.id,lastCheckinDate);
-  document.getElementById('checkin-text').value='';
-  renderDashboard();toast('Check-in saved');
-}
+    async function submitCheckin() {
+      const text = document.getElementById('checkin-text').value.trim();
+      if (!text) { toast('Write something first'); return; }
+      const mood = document.getElementById('checkin-mood').value;
+      await addTlEvent('checkin', text, null, { mood });
+      lastCheckinDate = today();
+      localStorage.setItem('wt_checkin_' + currentUser.id, lastCheckinDate);
+      document.getElementById('checkin-text').value = '';
+      renderDashboard(); toast('Check-in saved');
+    }
 
-// ── ASK AI ──
-function buildContext(){
-  const t=today();
-  const weekAgo=new Date(Date.now()-7*86400000).toISOString().slice(0,10);
-  const todayMins=timeline.filter(e=>e.created_at?.slice(0,10)===t&&(e.type==='timer'||e.type==='log')).reduce((a,e)=>a+(e.extra?.mins||0),0);
-  const weekMins=timeline.filter(e=>e.created_at?.slice(0,10)>=weekAgo&&(e.type==='timer'||e.type==='log')).reduce((a,e)=>a+(e.extra?.mins||0),0);
-  const projLines=projects.map(p=>{const pt=tasks.filter(x=>x.project===p.name);const done=pt.filter(x=>x.status==='done').length;const spent=pt.reduce((a,x)=>a+timeSpent(x.id),0);return `Project: ${p.name}${p.description?' — '+p.description:''} | ${pt.length} tasks, ${done} done, ${fmtMins(spent)} logged`;}).join('\n');
-  const taskLines=tasks.map(x=>`[${x.status}] ${x.title} | ${x.priority} | project:${x.project||'none'} | due:${x.due_date||'none'} | logged:${fmtMins(timeSpent(x.id))}`).join('\n');
-  const recentAct=timeline.slice(0,25).map(e=>`[${e.type}] ${e.created_at?.slice(0,16)} — ${e.text}${e.extra?.mins?' ('+fmtMins(e.extra.mins)+')':''}`).join('\n');
-  return `Today: ${t}\nTime today: ${fmtMins(todayMins)}\nTime this week: ${fmtMins(weekMins)}\n\nPROJECTS:\n${projLines||'(none)'}\n\nTASKS:\n${taskLines||'(none)'}\n\nRECENT ACTIVITY:\n${recentAct||'(none)'}`;
-}
+    // ── ASK AI ──
+    function buildContext() {
+      const t = today();
+      const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+      const todayMins = timeline.filter(e => e.created_at?.slice(0, 10) === t && (e.type === 'timer' || e.type === 'log')).reduce((a, e) => a + (e.extra?.mins || 0), 0);
+      const weekMins = timeline.filter(e => e.created_at?.slice(0, 10) >= weekAgo && (e.type === 'timer' || e.type === 'log')).reduce((a, e) => a + (e.extra?.mins || 0), 0);
+      const projLines = projects.map(p => { const pt = tasks.filter(x => x.project === p.name); const done = pt.filter(x => x.status === 'done').length; const spent = pt.reduce((a, x) => a + timeSpent(x.id), 0); return `Project: ${p.name}${p.description ? ' — ' + p.description : ''} | ${pt.length} tasks, ${done} done, ${fmtMins(spent)} logged`; }).join('\n');
+      const taskLines = tasks.map(x => `[${x.status}] ${x.title} | ${x.priority} | project:${x.project || 'none'} | due:${x.due_date || 'none'} | logged:${fmtMins(timeSpent(x.id))}`).join('\n');
+      const recentAct = timeline.slice(0, 25).map(e => `[${e.type}] ${e.created_at?.slice(0, 16)} — ${e.text}${e.extra?.mins ? ' (' + fmtMins(e.extra.mins) + ')' : ''}`).join('\n');
+      return `Today: ${t}\nTime today: ${fmtMins(todayMins)}\nTime this week: ${fmtMins(weekMins)}\n\nPROJECTS:\n${projLines || '(none)'}\n\nTASKS:\n${taskLines || '(none)'}\n\nRECENT ACTIVITY:\n${recentAct || '(none)'}`;
+    }
 
-function renderChat(){
-  const cm=document.getElementById('chat-msgs');if(!cm)return;
-  cm.innerHTML=chat.map(m=>m.role==='user'
-    ?`<div class="msg user">${esc(m.content)}</div>`
-    :`<div class="msg ai"><div class="ai-lbl">AI Assistant</div>${m.content.replace(/\n/g,'<br>')}</div>`
-  ).join('')||'<div class="empty">Ask anything about your work, time, or progress.</div>';
-  cm.scrollTop=cm.scrollHeight;
-  const lb=document.getElementById('ai-limit-bar');
-  if(lb)lb.innerHTML=aiQueriesRemaining<=3?`<div class="limit-bar">${aiQueriesRemaining} AI queries remaining today (resets at midnight)</div>`:'';
-}
+    function renderChat() {
+      const cm = document.getElementById('chat-msgs'); if (!cm) return;
+      cm.innerHTML = chat.map(m => m.role === 'user'
+        ? `<div class="msg user">${esc(m.content)}</div>`
+        : `<div class="msg ai"><div class="ai-lbl">AI Assistant</div>${m.content.replace(/\n/g, '<br>')}</div>`
+      ).join('') || '<div class="empty">Ask anything about your work, time, or progress.</div>';
+      cm.scrollTop = cm.scrollHeight;
+      const lb = document.getElementById('ai-limit-bar');
+      if (lb) lb.innerHTML = aiQueriesRemaining <= 3 ? `<div class="limit-bar">${aiQueriesRemaining} AI queries remaining today (resets at midnight)</div>` : '';
+    }
 
-function qa(q){sw('ask');document.getElementById('ai-input').value=q;askAI();}
+    function qa(q) { sw('ask'); document.getElementById('ai-input').value = q; askAI(); }
 
-async function askAI(){
-  const input=document.getElementById('ai-input');
-  const q=input.value.trim();if(!q)return;
-  input.value='';
-  chat.push({role:'user',content:q});renderChat();
-  const btn=document.getElementById('ai-btn');btn.disabled=true;btn.textContent='...';
-  const ctx=buildContext();
-  const msgs=chat.slice(0,-1).map(m=>({role:m.role,content:m.content}));
-  msgs.push({role:'user',content:q});
-  try{
-    const session=await sb.auth.getSession();
-    const token=session.data.session?.access_token;
-    const res=await fetch(AI_PROXY_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body:JSON.stringify({messages:msgs,context:ctx})
-    });
-    const data=await res.json();
-    if(data.error)throw new Error(data.error);
-    chat.push({role:'assistant',content:data.answer||'No response.'});
-    if(typeof data.remaining==='number')aiQueriesRemaining=data.remaining;
-  }catch(e){
-    chat.push({role:'assistant',content:'Error: '+e.message});
-  }
-  renderChat();
-  btn.disabled=false;btn.textContent='Ask';
-}
-</script>
+    async function askAI() {
+      const input = document.getElementById('ai-input');
+      const q = input.value.trim(); if (!q) return;
+      input.value = '';
+      chat.push({ role: 'user', content: q }); renderChat();
+      const btn = document.getElementById('ai-btn'); btn.disabled = true; btn.textContent = '...';
+      const ctx = buildContext();
+      const msgs = chat.slice(0, -1).map(m => ({ role: m.role, content: m.content }));
+      msgs.push({ role: 'user', content: q });
+      try {
+        const session = await sb.auth.getSession();
+        const token = session.data.session?.access_token;
+        const res = await fetch(AI_PROXY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ messages: msgs, context: ctx })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        chat.push({ role: 'assistant', content: data.answer || 'No response.' });
+        if (typeof data.remaining === 'number') aiQueriesRemaining = data.remaining;
+      } catch (e) {
+        chat.push({ role: 'assistant', content: 'Error: ' + e.message });
+      }
+      renderChat();
+      btn.disabled = false; btn.textContent = 'Ask';
+    }
+  </script>
 </body>
+
 </html>
