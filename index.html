@@ -396,6 +396,7 @@ async function signOut(){
   currentUser=null;tasks=[];projects=[];timeline=[];chat=[];
   document.getElementById('app-screen').style.display='none';
   document.getElementById('auth-screen').style.display='flex';
+  location.reload();
 }
 
 // ── SESSION ──
