@@ -993,7 +993,7 @@
     }
 
     async function signOut() {
-      // Immediately flip UI back to auth so the button always "does something"
+      // Flip UI back to auth immediately
       const app = document.getElementById('app-screen');
       const auth = document.getElementById('auth-screen');
       if (app) app.style.display = 'none';
@@ -1006,25 +1006,17 @@
       } catch (e) {
         console.error('Error during signOut():', e);
       } finally {
-        // Clear Supabase-related storage as aggressively as possible
+        // Clear client-side state and force a full reload
         try {
-          ['localStorage', 'sessionStorage'].forEach(storeName => {
-            const store = window[storeName];
-            if (!store) return;
-            const keys = [];
-            for (let i = 0; i < store.length; i++) {
-              const k = store.key(i);
-              if (k && (k.includes('supabase') || k.startsWith('sb-'))) keys.push(k);
-            }
-            keys.forEach(k => store.removeItem(k));
-          });
+          localStorage.clear();
+          sessionStorage.clear();
         } catch (_) { }
-
         currentUser = null;
         tasks = [];
         projects = [];
         timeline = [];
         chat = [];
+        window.location.reload();
       }
     }
 
