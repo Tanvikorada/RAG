@@ -993,6 +993,12 @@
     }
 
     async function signOut() {
+      // Immediately flip UI back to auth so the button always "does something"
+      const app = document.getElementById('app-screen');
+      const auth = document.getElementById('auth-screen');
+      if (app) app.style.display = 'none';
+      if (auth) auth.style.display = 'flex';
+
       try {
         if (timerInterval) await stopTimer();
         const { error } = await sb.auth.signOut();
@@ -1000,13 +1006,25 @@
       } catch (e) {
         console.error('Error during signOut():', e);
       } finally {
-        try { localStorage.clear(); } catch (_) { }
-        currentUser = null; tasks = []; projects = []; timeline = []; chat = [];
-        const app = document.getElementById('app-screen');
-        const auth = document.getElementById('auth-screen');
-        if (app) app.style.display = 'none';
-        if (auth) auth.style.display = 'flex';
-        window.location.reload();
+        // Clear Supabase-related storage as aggressively as possible
+        try {
+          ['localStorage', 'sessionStorage'].forEach(storeName => {
+            const store = window[storeName];
+            if (!store) return;
+            const keys = [];
+            for (let i = 0; i < store.length; i++) {
+              const k = store.key(i);
+              if (k && (k.includes('supabase') || k.startsWith('sb-'))) keys.push(k);
+            }
+            keys.forEach(k => store.removeItem(k));
+          });
+        } catch (_) { }
+
+        currentUser = null;
+        tasks = [];
+        projects = [];
+        timeline = [];
+        chat = [];
       }
     }
 
