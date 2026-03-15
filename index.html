@@ -408,6 +408,9 @@ sb.auth.onAuthStateChange(async(event,session)=>{
     const initials=(currentUser.email||'?').slice(0,2).toUpperCase();
     document.getElementById('user-avatar').textContent=initials;
     await loadAll();
+  } else {
+    document.getElementById('app-screen').style.display='none';
+    document.getElementById('auth-screen').style.display='flex';
   }
 });
 
