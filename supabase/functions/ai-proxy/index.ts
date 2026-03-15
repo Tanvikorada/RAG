@@ -5,8 +5,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
-const SUPABASE_URL = Deno.env.get("SUPA_URL") ?? "";
-const SUPABASE_SERVICE_KEY = Deno.env.get("SUPA_SERVICE_KEY") ?? "";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
 // Free tier limits
 const FREE_DAILY_AI_LIMIT = 10;
@@ -32,7 +32,7 @@ serve(async (req) => {
       });
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // Get user from token
     const { data: { user }, error: authError } = await supabase.auth.getUser(
