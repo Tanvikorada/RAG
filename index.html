@@ -392,6 +392,7 @@ async function signUp(){
 async function signOut(){
   if(timerInterval)stopTimer();
   await sb.auth.signOut();
+  localStorage.clear();
   currentUser=null;tasks=[];projects=[];timeline=[];chat=[];
   document.getElementById('app-screen').style.display='none';
   document.getElementById('auth-screen').style.display='flex';
